@@ -12,8 +12,8 @@ class Equipment{
 	int atk;
 	int def;
 	public:
-		Equipment(int,int,int);
-		vector<int> getStat();			
+		Equipment(int h, int a, int d) : hpmax(h), atk(a), def(d) {}
+        vector<int> getStat() { return {hpmax, atk, def}; }			
 };
 
 class Unit{
@@ -73,19 +73,22 @@ void Unit::showStatus(){
 }
 
 void Unit::newTurn(){
-	guard_on = false; 
+	guard_on = false;
+	dodge_on = false;
 }
 
 int Unit::beAttacked(int oppatk){
-	int dmg;
-	if(oppatk > def){
-		dmg = oppatk-def;	
-		if(guard_on) dmg = dmg/3;
-	}	
-	hp -= dmg;
-	if(hp <= 0){hp = 0;}
-	
-	return dmg;	
+    int dmg;
+    if(dodge_on && (rand() % 2 == 0)){
+        dmg = 0;
+    } else {
+        dmg = oppatk > def ? oppatk - def : 0;
+        if(guard_on) dmg /= 3;
+        if(dodge_on && dmg > 0) dmg *= 2;
+    }
+    hp -= dmg;
+    if(hp < 0) hp = 0;
+    return dmg;
 }
 
 int Unit::attack(Unit &opp){
@@ -101,7 +104,32 @@ int Unit::heal(){
 
 void Unit::guard(){
 	guard_on = true;
-}	
+}
+
+void Unit::dodge(){
+    dodge_on = true;
+}
+
+int Unit::ultimateAttack(Unit &opp){
+    return opp.beAttacked(atk * 2);
+}
+
+void Unit::equip(Equipment *newEq) {
+    if (equipment) {
+        vector<int> oldStat = equipment->getStat();
+        hpmax -= oldStat[0];
+        atk -= oldStat[1];
+        def -= oldStat[2];
+    }
+    
+    equipment = newEq;
+    vector<int> newStat = newEq->getStat();
+    hpmax += newStat[0];
+    atk += newStat[1];
+    def += newStat[2];
+    
+    if (hp > hpmax) hp = hpmax;
+}
 
 bool Unit::isDead(){
 	if(hp <= 0) return true;
@@ -167,4 +195,3 @@ void playerLose(){
 	cout << "*                                                     *\n";
 	cout << "*******************************************************\n";
 };
-
